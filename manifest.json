@@ -1,7 +1,7 @@
 {
 "update_url": "https://clients2.google.com/service/update2/crx",
 
-  "name": "Segment Event Tracker",
+  "name": "Segment Event Tracker Customized",
   "manifest_version": 2,
   "version": "1.4",
   "description": "See when Segment events are being tracked.",
