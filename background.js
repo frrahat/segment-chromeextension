@@ -69,7 +69,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 			}, (tabs) => {
 				var tab = tabs[0];
 				
-				event.hostName = tab.url;
+				// event.hostName = tab.url;
 				event.tabId = tab.id;
 
 				if (details.url == 'https://api.segment.io/v1/t') {
