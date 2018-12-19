@@ -41,6 +41,12 @@ chrome.extension.onConnect.addListener((port) => {
 			clearTrackedEventsForTab(tabId,port);
 			updateTrackedEventsForTab(tabId,port);
 		}
+		else if (msg.type == 'fetch_all_events') {
+			port.postMessage({
+				type: 'dump',
+				events: trackedEvents
+			});
+		}
 	});
 });
 

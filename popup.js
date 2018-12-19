@@ -112,9 +112,40 @@ port.onMessage.addListener((msg) => {
 			};
 		}
 	}
+
+	else if(msg.type == "dump") {
+		var data = "foo";
+		chrome.tabs.executeScript({
+			code: 'console.log(\"'+data+'\")'
+		});
+		// chrome.extension.getBackgroundPage().console.log(data);
+		copyText(data);
+	}
 });
 
+function generateSQL() {
+	chrome.tabs.query({ active: true, currentWindow: true },(tabs) => {
+		var currentTab = tabs[0];
+		
+		port.postMessage({
+			type: "fetch_all_events",
+			tabId: currentTab.id
+		});
+	});
+}
+
+function copyText(text) {
+	var dummy = document.createElement("input");
+	document.body.appendChild(dummy);
+	dummy.setAttribute('value', text);
+	dummy.select();
+	document.execCommand("copy");
+	document.body.removeChild(dummy);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+	var copyGeneratedSQLButton = document.getElementById('copySQLbutton');
+	copyGeneratedSQLButton.onclick = generateSQL;
 	var clearButton = document.getElementById('clearButton');
 	clearButton.onclick = clearTabLog;
 });
