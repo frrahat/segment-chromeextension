@@ -29,6 +29,58 @@ function printVariable(jsonObject,level) {
 	}
 	return returnString;
 }
+
+var trackingProperties = {
+	"Navigate": ["To State Name"],
+
+}
+
+function getSQLskeleton(jsonObject,level) {
+	var skeleton = {
+		'tablename': jsonObject.event,
+		'properties': {}
+	}
+	return skeleton;
+}
+
+// First, checks if it isn't implemented yet.
+if (!String.prototype.format) {
+	String.prototype.format = function() {
+		var args = arguments;
+		return this.replace(/{(\d+)}/g, function(match, number) { 
+			return typeof args[number] != 'undefined' ? args[number]: match;
+	  	});
+	};
+}
+
+function getSQLfromSkeleton(sqlSkeleton) {
+	var tableName = sqlSkeleton.tablename;
+	var conditions = "foo=0"
+	var sql = 'Select\n\  received_at, context_traits_organization_sso_id as ssoid, context_traits_email, event_text\n\ from {0} where {1}'.format(tableName, conditions);
+	return sql;
+}
+
+function getGeneratedSQL(events) {
+	SQLs = [];
+	for (var i=0;i<events.length;i++) {
+		var event = events[i];
+		if(event.type !== 'track')
+			continue
+		
+		var jsonObject = JSON.parse(event.raw);
+		SQLs.push(getSQLskeleton(jsonObject));
+	}
+	// removeDuplicates(SQLs);
+	sql = ''
+	for(var i=0; i<SQLs.length; i++) {
+		var sqlSkeleton = SQLs[i];
+		if(i!=0) sql += '\nUNION ALL\n';
+		sql += getSQLfromSkeleton(sqlSkeleton);
+	}
+	return sql;
+}
+
+
 function queryForUpdate() {
 	chrome.tabs.query({ active: true, currentWindow: true },(tabs) => {
 		var currentTab = tabs[0];
@@ -114,16 +166,16 @@ port.onMessage.addListener((msg) => {
 	}
 
 	else if(msg.type == "dump") {
-		var data = "foo";
+		sql = getGeneratedSQL(msg.events)
 		chrome.tabs.executeScript({
-			code: 'console.log(\"'+data+'\")'
+			code: 'console.log(\"'+sql+'\")'
 		});
 		// chrome.extension.getBackgroundPage().console.log(data);
-		copyText(data);
+		copyText(sql);
 	}
 });
 
-function generateSQL() {
+function evokeEventFetch() {
 	chrome.tabs.query({ active: true, currentWindow: true },(tabs) => {
 		var currentTab = tabs[0];
 		
@@ -145,7 +197,7 @@ function copyText(text) {
 
 document.addEventListener('DOMContentLoaded', function() {
 	var copyGeneratedSQLButton = document.getElementById('copySQLbutton');
-	copyGeneratedSQLButton.onclick = generateSQL;
+	copyGeneratedSQLButton.onclick = evokeEventFetch;
 	var clearButton = document.getElementById('clearButton');
 	clearButton.onclick = clearTabLog;
 });
