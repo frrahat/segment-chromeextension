@@ -35,9 +35,30 @@ var trackingProperties = {
 
 }
 
+function get_table_name(event_text) {
+    var table_name = '';
+    for(var i=0; i<event_text.length; i++) {
+        var c = event_text[i];
+        if (c == ' ' || c == ':' || c == '/' || c == '>') {
+            if (i > 0 && table_name[table_name.length - 1] != '_') {
+				table_name += '_';
+			}
+		}
+        else if (c == c.toUpperCase()) {
+            if (i > 0 && table_name[table_name.length - 1] != '_' && event_text[i-1] == event_text[i-1].toLowerCase()) {
+				table_name += '_';
+			}
+			table_name += c.toLowerCase();
+		}
+        else table_name += c.toLowerCase();
+	}
+    
+	return table_name;
+}
+	
 function getSQLskeleton(jsonObject,level) {
 	var skeleton = {
-		'tablename': jsonObject.event,
+		'tablename': get_table_name(jsonObject.event),
 		'properties': {}
 	}
 	return skeleton;
@@ -55,7 +76,7 @@ if (!String.prototype.format) {
 
 function getSQLfromSkeleton(sqlSkeleton) {
 	var tableName = sqlSkeleton.tablename;
-	var conditions = "foo=0"
+	var conditions = "foo=0 "
 	var sql = 'Select\n\  received_at, context_traits_organization_sso_id as ssoid, context_traits_email, event_text\n\ from {0} where {1}'.format(tableName, conditions);
 	return sql;
 }
@@ -74,7 +95,7 @@ function getGeneratedSQL(events) {
 	sql = ''
 	for(var i=0; i<SQLs.length; i++) {
 		var sqlSkeleton = SQLs[i];
-		if(i!=0) sql += '\nUNION ALL\n';
+		if(i!=0) sql += '\nUNION ALL\n ';
 		sql += getSQLfromSkeleton(sqlSkeleton);
 	}
 	return sql;
