@@ -29,6 +29,7 @@ function clearTrackedEventsForTab(tabId,port) {
 		}
 	}
 	trackedEvents = newTrackedEvents;
+	updateBadge(tabId);
 }
 
 chrome.extension.onConnect.addListener((port) => {
@@ -49,6 +50,16 @@ chrome.extension.onConnect.addListener((port) => {
 		}
 	});
 });
+
+function updateBadge(tabId) {
+	eventCount = 0;
+	for(var i=0;i<trackedEvents.length;i++) {
+		if (trackedEvents[i].tabId == tabId) {
+			eventCount++;
+		}
+	}
+	chrome.browserAction.setBadgeText({text: eventCount.toString(), tabId: tabId});
+}
 
 chrome.webRequest.onBeforeRequest.addListener(
 	(details) => {
@@ -82,18 +93,21 @@ chrome.webRequest.onBeforeRequest.addListener(
 					event.type = 'track';
 					
 					trackedEvents.unshift(event);
+					updateBadge(event.tabId);
 				}
 				else if (details.url == 'https://api.segment.io/v1/i') {
 					event.eventName = 'Identify';
 					event.type = 'identify';
 					
 					trackedEvents.unshift(event);
+					updateBadge(event.tabId);
 				}
 				else if (details.url == 'https://api.segment.io/v1/p') {
 					event.eventName = 'Page loaded';
 					event.type = 'pageLoad';
 					
 					trackedEvents.unshift(event);
+					updateBadge(event.tabId);
 				}
 			});
 		}
