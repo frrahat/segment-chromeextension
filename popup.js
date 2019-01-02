@@ -30,11 +30,6 @@ function printVariable(jsonObject,level) {
 	return returnString;
 }
 
-var trackingProperties = {
-	"Navigate": ["To State Name"],
-
-}
-
 function get_table_name(event_text) {
     var table_name = '';
     for(var i=0; i<event_text.length; i++) {
@@ -58,8 +53,9 @@ function get_table_name(event_text) {
 	
 function getSQLskeleton(jsonObject,level) {
 	var skeleton = {
-		'tablename': get_table_name(jsonObject.event),
-		'properties': {}
+		'eventName': jsonObject.event,
+		'properties': jsonObject.properties,
+		'context_props': jsonObject.context.page
 	}
 	return skeleton;
 }
@@ -74,10 +70,30 @@ if (!String.prototype.format) {
 	};
 }
 
+
+var trackingProperties = {
+	"Navigate": ["To State Name"],
+}
+
 function getSQLfromSkeleton(sqlSkeleton) {
-	var tableName = sqlSkeleton.tablename;
-	var conditions = "foo=0 "
-	var sql = 'Select\n\  received_at, context_traits_organization_sso_id as ssoid, context_traits_email, event_text\n\ from {0} where {1}'.format(tableName, conditions);
+	var eventName = sqlSkeleton.eventName;
+	var tableName = get_table_name(eventName);
+	var properties = sqlSkeleton.properties;
+	var context_props = sqlSkeleton.context_props;
+
+	var conditions = {};
+
+	if(trackingProperties.hasOwnProperty(eventName)) {
+		var allowed_prop_keys = trackingProperties[eventName];
+		allowed_prop_keys.forEach(key => {
+			if(properties.hasOwnProperty(key)) {
+				conditions[key] = properties[key];
+			}
+		});
+	}
+	//TODO add context_page_paths or others in the conditions, inclue respective split_part ed colum and then generate string
+	var conditionString = "foo=0"
+	var sql = 'Select received_at, context_traits_organization_sso_id as ssoid, context_traits_email, event_text from {0} where {1}'.format(tableName, conditionString);
 	return sql;
 }
 
@@ -99,7 +115,6 @@ function getGeneratedSQL(events) {
 	}
 	return sql;
 }
-
 
 function queryForUpdate() {
 	chrome.tabs.query({ active: true, currentWindow: true },(tabs) => {
@@ -170,12 +185,12 @@ port.onMessage.addListener((msg) => {
 	}
 
 	else if(msg.type == "dump") {
-		sql = getGeneratedSQL(msg.events)
+		events = JSON.stringify(msg.events.filter(event => event.type === 'track'));
 		chrome.tabs.executeScript({
-			code: 'console.log(\"'+sql+'\")'
+			code: 'console.log(\"'+events+'\")'
 		});
-		// chrome.extension.getBackgroundPage().console.log(data);
-		copyText(sql);
+		// chrome.extension.getBackgroundPage().console.log(events);
+		copyText(events);
 	}
 });
 
@@ -200,8 +215,8 @@ function copyText(text) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-	var copyGeneratedSQLButton = document.getElementById('copySQLbutton');
-	copyGeneratedSQLButton.onclick = evokeEventFetch;
+	var copyEventlistButton = document.getElementById('copyEventlistButton');
+	copyEventlistButton.onclick = evokeEventFetch;
 	var clearButton = document.getElementById('clearButton');
 	clearButton.onclick = clearTabLog;
 });
