@@ -21,8 +21,9 @@ function updateTrackedEventsForTab(tabId,port) {
 		events: sendEvents
 	});
 }
+
 function clearTrackedEventsForTab(tabId,port) {
-	var newTrackedEvents = [];			
+	var newTrackedEvents = [];
 	for(var i=0;i<trackedEvents.length;i++) {
 		if (trackedEvents[i].tabId != tabId) {
 			newTrackedEvents.push(trackedEvents[i]);
