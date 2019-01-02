@@ -61,12 +61,29 @@ function updateBadge(tabId) {
 	chrome.browserAction.setBadgeText({text: eventCount.toString(), tabId: tabId});
 }
 
+unnecessaryKeys = ["context.traits", "context.userAgent", "context.library", "traits", "integrations", "anonymousId", "timestamp", "type", "writeKey", "userId", "sentAt", "_metadata", "bundled", "unbundled", "messageId"]
+function removeUnnecessaryKeys(jsonobject) {
+	unnecessaryKeys.forEach(function(key) {
+		if(key.includes('.')) {
+			parts = key.split('.');
+			if(jsonobject.hasOwnProperty(parts[0])) {
+				delete jsonobject[parts[0]][parts[1]];
+			}
+		}
+		else if(jsonobject.hasOwnProperty(key)) {
+			delete jsonobject[key];
+		}
+	});
+}
+
 chrome.webRequest.onBeforeRequest.addListener(
 	(details) => {
 		if (details.url.startsWith('https://api.segment.io/v1')) {
 			var postedString = decodeURIComponent(String.fromCharCode.apply(null,new Uint8Array(details.requestBody.raw[0].bytes)));
 			
 			var rawEvent = JSON.parse(postedString);
+			// chrome.extension.getBackgroundPage().console.log(rawEvent);
+			removeUnnecessaryKeys(rawEvent);
 			
 			var today = new Date();
 			
@@ -75,8 +92,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 			var s = zeroPad(today.getSeconds());
 
 			var event = {
-				eventName: rawEvent.event,
-				raw: postedString,
+				data: rawEvent,
 				trackedTime: h + ':' + m + ':' + s,
 			};
 
@@ -96,14 +112,12 @@ chrome.webRequest.onBeforeRequest.addListener(
 					updateBadge(event.tabId);
 				}
 				else if (details.url == 'https://api.segment.io/v1/i') {
-					event.eventName = 'Identify';
 					event.type = 'identify';
 					
 					trackedEvents.unshift(event);
 					updateBadge(event.tabId);
 				}
 				else if (details.url == 'https://api.segment.io/v1/p') {
-					event.eventName = 'Page loaded';
 					event.type = 'pageLoad';
 					
 					trackedEvents.unshift(event);

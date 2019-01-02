@@ -88,8 +88,7 @@ function getGeneratedSQL(events) {
 		if(event.type !== 'track')
 			continue
 		
-		var jsonObject = JSON.parse(event.raw);
-		SQLs.push(getSQLskeleton(jsonObject));
+		SQLs.push(getSQLskeleton(event.data));
 	}
 	// removeDuplicates(SQLs);
 	sql = ''
@@ -124,19 +123,6 @@ function clearTabLog() {
 	});
 }
 
-
-unnecessaryKeys = ["context.traits", "context.userAgent", "context.library", "traits", "integrations", "anonymousId", "timestamp", "type", "writeKey", "userId", "sentAt", "_metadata", "bundled", "unbundled", "messageId"]
-function removeUnnecessaryKeys(jsonobject) {
-	unnecessaryKeys.forEach(function(key) {
-		if(key.includes('.')) {
-			parts = key.split('.')
-			delete jsonobject[parts[0]][parts[1]]
-		}
-		else delete jsonobject[key];
-	});
-	// chrome.extension.getBackgroundPage().console.log(jsonobject);
-}
-
 var port = chrome.extension.connect({
 	name: "trackPopup"
 });
@@ -145,7 +131,6 @@ queryForUpdate();
 
 port.onMessage.addListener((msg) => {
 	if (msg.type == "update") {
-		// chrome.extension.getBackgroundPage().console.log(jsonObject);
 		
 		var prettyEventsString = '';
 		
@@ -153,14 +138,12 @@ port.onMessage.addListener((msg) => {
 			for (var i=0;i<msg.events.length;i++) {
 				var event = msg.events[i];
 				
-				var jsonObject = JSON.parse(event.raw);
-				removeUnnecessaryKeys(jsonObject);
 				var eventString = '';
 				
 				eventString += '<div class="eventTracked eventType_' + event.type + '">';
 					eventString += '<div class="eventInfo" number="' + i + '"><span class="eventName">' + event.trackedTime + ' - ' +event.eventName + '</span></div>';
 					eventString += '<div class="eventContent" id="eventContent_' + i + '">';
-						eventString += printVariable(jsonObject,0);
+						eventString += printVariable(event.data,0);
 					eventString += '</div>';
 				eventString += '</div>';
 				
