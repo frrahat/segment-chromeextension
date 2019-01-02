@@ -99,7 +99,7 @@ port.onMessage.addListener((msg) => {
 	}
 
 	else if(msg.type == "dump") {
-		events = JSON.stringify(msg.events.filter(event => event.type === 'track'));
+		events = JSON.stringify(msg.events.filter(event => event.type === 'track').map(event => event.data));
 		chrome.tabs.executeScript({
 			code: 'console.log(\"'+events+'\")'
 		});
