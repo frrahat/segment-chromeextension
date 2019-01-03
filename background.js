@@ -20,9 +20,15 @@ function updateTrackedEventsForTab(tabId,port) {
 		type: 'update',
 		events: sendEvents
 	});
+
+	setBadgeText(sendEvents.length, tabId);
 }
 
 function clearTrackedEventsForTab(tabId,port) {
+	if(tabId === '*') {
+		trackedEvents = [];
+		return;
+	}
 	var newTrackedEvents = [];
 	for(var i=0;i<trackedEvents.length;i++) {
 		if (trackedEvents[i].tabId != tabId) {
@@ -30,7 +36,6 @@ function clearTrackedEventsForTab(tabId,port) {
 		}
 	}
 	trackedEvents = newTrackedEvents;
-	updateBadge(tabId);
 }
 
 chrome.extension.onConnect.addListener((port) => {
@@ -49,8 +54,16 @@ chrome.extension.onConnect.addListener((port) => {
 				events: trackedEvents
 			});
 		}
+		else if (msg.type == 'clearAll') {
+			clearTrackedEventsForTab('*',port);
+			updateTrackedEventsForTab(tabId,port);
+		}
 	});
 });
+
+function setBadgeText(eventCount, tabId) {
+	chrome.browserAction.setBadgeText({text: eventCount == 0 ? '':eventCount.toString(), tabId: tabId});
+}
 
 function updateBadge(tabId) {
 	eventCount = 0;
@@ -59,7 +72,7 @@ function updateBadge(tabId) {
 			eventCount++;
 		}
 	}
-	chrome.browserAction.setBadgeText({text: eventCount.toString(), tabId: tabId});
+	setBadgeText(eventCount, tabId);
 }
 
 unnecessaryKeys = ["context.traits", "context.userAgent", "context.library", "traits", "integrations", "anonymousId", "timestamp", "type", "writeKey", "userId", "sentAt", "_metadata", "bundled", "unbundled", "messageId"]
