@@ -1,6 +1,9 @@
 import json
 import csv
 import os
+import datetime
+import shutil
+import argparse
 
 def get_table_name(event_text):
     table_name = ''
@@ -43,10 +46,24 @@ def get_normalized_dict(dictionary):
 
 
 if __name__ == "__main__":
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    all_events = json.loads(open(os.path.join(dir_path, 'event_list.json'), 'r').read())
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--product-area', '-p', required=True)
+    args = parser.parse_args()
 
-    data_file = open(os.path.join(dir_path, 'data.csv'), 'w')
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    data_dir = os.path.join(dir_path, 'data')
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+
+    event_file_path = os.path.join(dir_path, 'event_list.json')
+    all_events = json.loads(open(event_file_path, 'r').read())
+
+    time_str = datetime.datetime.now().strftime('%Y-%m-%d,%H-%M-%S.%f')
+    event_copy_file_path = os.path.join(data_dir, 'event_list-' + args.product_area + '-' + time_str + '.json')
+    shutil.copy(event_file_path, event_copy_file_path)
+    shutil.copystat(event_file_path, event_copy_file_path)
+
+    data_file = open(os.path.join(data_dir, 'data-' + args.product_area + '-' + time_str + '.csv'), 'w')
     csv_event_writer = csv.writer(data_file)
     
     cols_or_keys = []
