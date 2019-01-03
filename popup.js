@@ -81,7 +81,7 @@ port.onMessage.addListener((msg) => {
 				var eventString = '';
 				
 				eventString += '<div class="eventTracked eventType_' + event.type + '">';
-					eventString += '<div class="eventInfo" number="' + i + '"><span class="eventName">' + event.trackedTime + ' - ' +event.eventName + '</span></div>';
+					eventString += '<div class="eventInfo" number="' + i + '"><span class="eventName">' + event.trackedTime + ' - ' +event.data.event + '</span></div>';
 					eventString += '<div class="eventContent" id="eventContent_' + i + '">';
 						eventString += printVariable(event.data,0);
 					eventString += '</div>';
