@@ -5,22 +5,6 @@ import datetime
 import shutil
 import argparse
 
-def get_table_name(event_text):
-    table_name = ''
-    for i in range(len(event_text)):
-        c = event_text[i]
-        if c in (' ', ':', '/', '>'):
-            if i > 0 and table_name[-1] != '_':
-                table_name += '_'
-        elif c.isupper():
-            if i > 0 and table_name[-1] != '_' and event_text[i-1].islower():
-                table_name += '_'
-            table_name += c.lower()
-        else:
-            table_name += c.lower()
-    
-    return table_name
-
 def get_normalized_dict(dictionary):
     out = dict()
     for key1 in dictionary:

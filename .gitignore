@@ -1,2 +1,3 @@
-event_list.json
+analysis/event_list.json
+analysis/data_for_sql.csv
 analysis/data/*
